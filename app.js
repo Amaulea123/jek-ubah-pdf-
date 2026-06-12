@@ -66,12 +66,12 @@ function handleFiles(e) {
     reader.onload = (ev) => {
       const img = new Image();
       img.onload = () => {
-        // Auto resize large image first to optimize memory and speed
+        // Resize image synchronously (returns a canvas, which acts like an image)
         const optimizedImg = resizeImage(img, 1280);
         
         state.pages.push({
           id: Date.now() + Math.random(),
-          originalImg: optimizedImg,
+          originalImg: optimizedImg, // This is now a canvas element
           editedImg: null,
           rotation: 0,
           enhanced: false,
@@ -92,9 +92,17 @@ function handleFiles(e) {
   e.target.value = '';
 }
 
-// Helper: Resize image to max dimension
+// Helper: Resize image to max dimension (returns Canvas directly)
 function resizeImage(img, maxDim) {
-  if (img.width <= maxDim && img.height <= maxDim) return img;
+  if (img.width <= maxDim && img.height <= maxDim) {
+    // If small enough, just return a canvas with the original image drawn on it
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    return canvas;
+  }
 
   const canvas = document.createElement('canvas');
   let w = img.width;
@@ -117,9 +125,7 @@ function resizeImage(img, maxDim) {
   const ctx = canvas.getContext('2d');
   ctx.drawImage(img, 0, 0, w, h);
 
-  const resizedImg = new Image();
-  resizedImg.src = canvas.toDataURL('image/jpeg', 0.85);
-  return resizedImg;
+  return canvas; // Return the canvas directly to keep it synchronous
 }
 
 // ========== RENDER ==========
