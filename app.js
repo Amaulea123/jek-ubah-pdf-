@@ -480,9 +480,9 @@ async function generatePDF() {
     const x = margin + (contentW - finalW) / 2;
     const y = margin + (contentH - finalH) / 2;
 
-    // Fast JPEG encoding
-    const imgData = tempCanvas.toDataURL('image/jpeg', quality);
-    doc.addImage(imgData, 'JPEG', x, y, finalW, finalH, undefined, 'FAST');
+    // DIRECTLY add canvas to jsPDF (Bypasses slow base64 toDataURL generation!)
+    // jsPDF internally handles canvas data compression much faster.
+    doc.addImage(tempCanvas, 'JPEG', x, y, finalW, finalH, undefined, 'FAST');
   }
 
   loadingText.textContent = 'Menyimpan PDF...';
