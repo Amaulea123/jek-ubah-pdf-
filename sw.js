@@ -1,4 +1,4 @@
-const CACHE_NAME = 'scanpro-v1';
+const CACHE_NAME = 'scanpro-v3'; // Bump version to force update
 const ASSETS = [
   '/',
   '/index.html',
@@ -22,15 +22,33 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+      Promise.all(
+        keys
+          .filter((k) => k !== CACHE_NAME)
+          .map((k) => caches.delete(k))
+      )
     )
   );
   self.clients.claim();
 });
 
-// Fetch - cache first, fallback to network
+// Network First strategy to ensure updates are instantly received when online
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request))
+    fetch(e.request)
+      .then((response) => {
+        // If valid response, clone and update cache
+        if (response && response.status === 200 && response.type === 'basic') {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, responseToCache);
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        // Offline fallback
+        return caches.match(e.request);
+      })
   );
 });
