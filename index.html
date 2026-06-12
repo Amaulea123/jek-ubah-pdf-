@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="description" content="ScanPro - Scanner foto ke PDF gratis, tanpa iklan, offline.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ScanPro">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>ScanPro - Scanner PDF Gratis</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <h1>📄 ScanPro</h1>
+    </div>
+    <div class="header-right">
+      <span class="page-count" id="pageCount">0 halaman</span>
+    </div>
+  </header>
+
+  <!-- Empty State -->
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">📸</div>
+    <h2>Scan Dokumen ke PDF</h2>
+    <p>Ambil foto atau pilih gambar dari galeri.<br>Gratis, tanpa iklan, 100% offline.</p>
+    <div class="action-buttons">
+      <button class="btn btn-primary" id="btnCamera">
+        📷 Kamera
+      </button>
+      <button class="btn btn-secondary" id="btnGallery">
+        🖼️ Galeri
+      </button>
+    </div>
+  </div>
+
+  <!-- Pages Container -->
+  <div class="pages-container" id="pagesContainer" style="display:none;">
+    <div class="pages-grid" id="pagesGrid"></div>
+  </div>
+
+  <!-- Bottom Actions (shown when pages exist) -->
+  <div class="bottom-bar" id="bottomBar" style="display:none;">
+    <button class="btn btn-icon" id="btnAddMore" title="Tambah halaman">
+      ➕ Tambah
+    </button>
+    <button class="btn btn-icon" id="btnClearAll" title="Hapus semua">
+      🗑️ Hapus
+    </button>
+    <button class="btn btn-export" id="btnExportPDF" title="Export PDF">
+      📄 Buat PDF
+    </button>
+  </div>
+
+  <!-- Image Editor Modal -->
+  <div class="modal" id="editorModal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>✏️ Edit Halaman</h3>
+        <button class="btn-close" id="btnCloseEditor">✕</button>
+      </div>
+      <div class="editor-canvas-wrap">
+        <canvas id="editorCanvas"></canvas>
+      </div>
+      <div class="editor-controls">
+        <button class="btn btn-sm" id="btnRotateLeft">↪️ Putar Kiri</button>
+        <button class="btn btn-sm" id="btnRotateRight">↩️ Putar Kanan</button>
+        <button class="btn btn-sm" id="btnEnhance">✨ Enhance</button>
+        <button class="btn btn-sm" id="btnGrayscale">🔲 Grayscale</button>
+      </div>
+      <div class="editor-actions">
+        <button class="btn btn-secondary" id="btnCancelEdit">Batal</button>
+        <button class="btn btn-primary" id="btnSaveEdit">💾 Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PDF Settings Modal -->
+  <div class="modal" id="pdfModal" style="display:none;">
+    <div class="modal-content modal-sm">
+      <div class="modal-header">
+        <h3>📄 Export PDF</h3>
+        <button class="btn-close" id="btnClosePdf">✕</button>
+      </div>
+      <div class="pdf-settings">
+        <label>
+          Ukuran Kertas:
+          <select id="paperSize">
+            <option value="a4" selected>A4</option>
+            <option value="letter">Letter</option>
+            <option value="legal">Legal</option>
+            <option value="f4">F4 / Folio</option>
+          </select>
+        </label>
+        <label>
+          Orientasi:
+          <select id="orientation">
+            <option value="portrait" selected>Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+        </label>
+        <label>
+          Kualitas:
+          <select id="quality">
+            <option value="0.6">Rendah (file kecil)</option>
+            <option value="0.8" selected>Sedang</option>
+            <option value="0.95">Tinggi (file besar)</option>
+          </select>
+        </label>
+        <label>
+          Nama File:
+          <input type="text" id="fileName" value="scan" placeholder="nama file">
+        </label>
+        <label>
+          Margin:
+          <select id="margin">
+            <option value="0">Tanpa margin</option>
+            <option value="10" selected>Kecil</option>
+            <option value="20">Sedang</option>
+            <option value="30">Besar</option>
+          </select>
+        </label>
+      </div>
+      <div class="editor-actions">
+        <button class="btn btn-secondary" id="btnCancelPdf">Batal</button>
+        <button class="btn btn-primary" id="btnGeneratePdf">📄 Generate PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+    <div class="loading-spinner"></div>
+    <p id="loadingText">Membuat PDF...</p>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Hidden file inputs -->
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" multiple style="display:none;">
+  <input type="file" id="galleryInput" accept="image/*" multiple style="display:none;">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
