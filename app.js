@@ -393,6 +393,9 @@ async function generatePDF() {
   pdfModal.style.display = 'none';
   showLoading('Membuat PDF...');
 
+  // Allow UI to render loading screen
+  await new Promise(r => setTimeout(r, 100));
+
   const { jsPDF } = window.jspdf;
 
   const paperSizes = {
@@ -420,8 +423,13 @@ async function generatePDF() {
   const contentW = pageW - margin * 2;
   const contentH = pageH - margin * 2;
 
+  // Maximum dimension for images in PDF to prevent extreme memory usage
+  const MAX_PDF_IMAGE_DIM = 1600;
+
   for (let i = 0; i < state.pages.length; i++) {
     loadingText.textContent = `Memproses halaman ${i + 1}/${state.pages.length}...`;
+    // Yield execution to allow UI updates
+    await new Promise(r => requestAnimationFrame(r));
 
     if (i > 0) doc.addPage();
 
@@ -429,10 +437,17 @@ async function generatePDF() {
     const img = page.editedImg || page.originalImg;
     const rot = page.rotation;
 
-    // Draw to temp canvas with rotation
     const isRotated = rot === 90 || rot === 270;
-    const srcW = isRotated ? img.height : img.width;
-    const srcH = isRotated ? img.width : img.height;
+    let srcW = isRotated ? img.height : img.width;
+    let srcH = isRotated ? img.width : img.height;
+
+    // Downscale if exceeds MAX_PDF_IMAGE_DIM to boost speed drastically
+    let scale = 1;
+    if (srcW > MAX_PDF_IMAGE_DIM || srcH > MAX_PDF_IMAGE_DIM) {
+      scale = MAX_PDF_IMAGE_DIM / Math.max(srcW, srcH);
+      srcW = Math.round(srcW * scale);
+      srcH = Math.round(srcH * scale);
+    }
 
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = srcW;
@@ -442,6 +457,8 @@ async function generatePDF() {
     ctx.save();
     ctx.translate(srcW / 2, srcH / 2);
     ctx.rotate((rot * Math.PI) / 180);
+    
+    // Draw scaled down
     const drawW = isRotated ? srcH : srcW;
     const drawH = isRotated ? srcW : srcH;
     ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
@@ -463,12 +480,13 @@ async function generatePDF() {
     const x = margin + (contentW - finalW) / 2;
     const y = margin + (contentH - finalH) / 2;
 
+    // Fast JPEG encoding
     const imgData = tempCanvas.toDataURL('image/jpeg', quality);
-    doc.addImage(imgData, 'JPEG', x, y, finalW, finalH);
+    doc.addImage(imgData, 'JPEG', x, y, finalW, finalH, undefined, 'FAST');
   }
 
   loadingText.textContent = 'Menyimpan PDF...';
-  await new Promise(r => setTimeout(r, 100));
+  await new Promise(r => setTimeout(r, 150));
 
   doc.save(`${fileName}.pdf`);
   hideLoading();
