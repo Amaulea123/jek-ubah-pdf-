@@ -66,9 +66,12 @@ function handleFiles(e) {
     reader.onload = (ev) => {
       const img = new Image();
       img.onload = () => {
+        // Auto resize large image first to optimize memory and speed
+        const optimizedImg = resizeImage(img, 1280);
+        
         state.pages.push({
           id: Date.now() + Math.random(),
-          originalImg: img,
+          originalImg: optimizedImg,
           editedImg: null,
           rotation: 0,
           enhanced: false,
@@ -87,6 +90,36 @@ function handleFiles(e) {
   });
 
   e.target.value = '';
+}
+
+// Helper: Resize image to max dimension
+function resizeImage(img, maxDim) {
+  if (img.width <= maxDim && img.height <= maxDim) return img;
+
+  const canvas = document.createElement('canvas');
+  let w = img.width;
+  let h = img.height;
+
+  if (w > h) {
+    if (w > maxDim) {
+      h *= maxDim / w;
+      w = maxDim;
+    }
+  } else {
+    if (h > maxDim) {
+      w *= maxDim / h;
+      h = maxDim;
+    }
+  }
+
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+
+  const resizedImg = new Image();
+  resizedImg.src = canvas.toDataURL('image/jpeg', 0.85);
+  return resizedImg;
 }
 
 // ========== RENDER ==========
